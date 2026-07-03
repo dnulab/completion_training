@@ -1,7 +1,11 @@
 # Onboarding Exercise
 In this module, you will learn how to train your first completion model, test its accuracy, and visualize how models learn without ever seeing all of the data.
 # Prerequisites
-The codebase is built on vanilla PyTorch. CUDA is automatically supported out of the box if you have a compatible GPU and the correct PyTorch drivers installed. If you are running on a CPU, the scripts will adapt automatically with no configuration changes required on your end.
+To start, make sure you have any version of Python 3.12 installed. There are two packages that must be installed for this code to work; `torch` and `numpy`. To do this, run the following in the terminal:
+```
+pip install torch numpy
+```
+Note: If you want to use a CUDA GPU (NVIDIA), check your cuda driver version and install the corresponding version of torch.
 # First Experiment: Train a memorization model
 ### 1. Generate the data.
 To start your first experiment, you must first generate some values to a .txt file using one of the numerous `gen_*.py` files. We will start with `gen_capital.py`. First, run the following command in your terminal:
