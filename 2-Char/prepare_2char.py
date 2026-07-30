@@ -11,11 +11,20 @@ train.bin, val.bin, and meta.pkl to an output directory.
 from __future__ import annotations
 
 import argparse
-import pickle
 from dataclasses import dataclass
 from pathlib import Path
+import sys
 
-import numpy as np
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from completion_core.prep import (
+    build_token_vocab,
+    encode_token_lines,
+    load_lines,
+    save_outputs,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -33,17 +42,6 @@ class PrepareConfig:
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
-
-def load_lines(path: Path) -> list[str]:
-    """Read all lines from a text file, stripping trailing whitespace but keeping structure."""
-    if not path.exists():
-        raise FileNotFoundError(
-            f"Input file not found: {path}. Check the path and try again."
-        )
-    with path.open(encoding="utf-8") as fh:
-        # Strip trailing spaces/newlines so we can manually handle '\n' token safely
-        return [line.strip() for line in fh if line.strip()]
-
 
 def tokenize_line(line: str, pad_token: str) -> list[str]:
     """
@@ -75,56 +73,6 @@ def tokenize_line(line: str, pad_token: str) -> list[str]:
     tokens.append('\n')
     
     return tokens
-
-
-def build_vocab(tokenized_lines: list[list[str]], pad_token: str) -> tuple[dict[str, int], dict[int, str]]:
-    """
-    Build token-to-index and index-to-character lookup tables from tokenized lists.
-    """
-    # Gather all unique tokens across all sequences
-    unique_tokens = set()
-    for tokens in tokenized_lines:
-        unique_tokens.update(tokens)
-        
-    # Sort them for consistency, pushing special tokens or structural ones wherever you like
-    sorted_tokens = sorted(list(unique_tokens))
-    
-    # Ensure pad token as an independent string isn't floating around weirdly 
-    # if it's already embedded inside 2-character tokens (like 'a_').
-    if pad_token in sorted_tokens:
-        sorted_tokens.remove(pad_token)
-    sorted_tokens.append(pad_token)
-
-    stoi = {tok: i for i, tok in enumerate(sorted_tokens)}
-    itos = {i: tok for i, tok in enumerate(sorted_tokens)}
-    return stoi, itos
-
-
-def encode(tokenized_lines: list[list[str]], stoi: dict[str, int]) -> np.ndarray:
-    """Encode custom tokens into a continuous uint16 array of token IDs."""
-    flat_ids = []
-    for tokens in tokenized_lines:
-        for token in tokens:
-            flat_ids.append(stoi[token])
-    return np.array(flat_ids, dtype=np.uint16)
-
-
-def save_outputs(
-    out_dir: Path,
-    train_ids: np.ndarray,
-    val_ids: np.ndarray,
-    stoi: dict[str, int],
-    itos: dict[int, str],
-) -> None:
-    """Write train.bin, val.bin, and meta.pkl to `out_dir`."""
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    train_ids.tofile(out_dir / "train.bin")
-    val_ids.tofile(out_dir / "val.bin")
-
-    meta = {"vocab_size": len(stoi), "stoi": stoi, "itos": itos}
-    with (out_dir / "meta.pkl").open("wb") as fh:
-        pickle.dump(meta, fh)
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +112,7 @@ def parse_args() -> PrepareConfig:
 def main() -> None:
     cfg = parse_args()
 
-    lines = load_lines(cfg.input_file)
+    lines = load_lines(cfg.input_file, strip=True, drop_empty=True)
     print(f"Lines loaded    : {len(lines)}")
     
     # Tokenize every line individual first
@@ -176,7 +124,7 @@ def main() -> None:
     val_lines = tokenized_lines[split:]
 
     # Build vocabulary using all tokens
-    stoi, itos = build_vocab(tokenized_lines, cfg.pad_token)
+    stoi, itos = build_token_vocab(tokenized_lines, cfg.pad_token)
     print(f"Vocabulary size : {len(stoi)}")
 
     # --- ADD THIS TO DUMP THE VOCAB ---
@@ -187,8 +135,8 @@ def main() -> None:
     # ----------------------------------
     
     # Flatten and convert tokens to integer IDs
-    train_ids = encode(train_lines, stoi)
-    val_ids = encode(val_lines, stoi)
+    train_ids = encode_token_lines(train_lines, stoi)
+    val_ids = encode_token_lines(val_lines, stoi)
     print(f"Train tokens    : {len(train_ids)}")
     print(f"Val tokens      : {len(val_ids)}")
 

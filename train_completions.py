@@ -9,20 +9,24 @@ uint16 token IDs in train.bin / val.bin alongside a meta.pkl vocabulary file.
 from __future__ import annotations
 
 import argparse
-import os
-import pickle
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 import sys
 import time
 import csv
 
-import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
+
+from completion_core.modeling import (
+    CompletionTransformer,
+    ModelConfig,
+    make_checkpoint_payload,
+)
+from completion_core.training import SequenceDataset, run_epoch
+from completion_core.vocabulary import Vocabulary
 
 
 # ---------------------------------------------------------------------------
@@ -48,201 +52,6 @@ class TrainConfig:
     grad_clip: float = 1.0
     seed: int = 42
     log_interval: int = 50  # batches between progress prints
-
-
-# ---------------------------------------------------------------------------
-# Vocabulary helpers
-# ---------------------------------------------------------------------------
-
-@dataclass
-class Vocabulary:
-    vocab_size: int
-    stoi: dict[str, int]
-    itos: dict[int, str]
-
-    # Special token IDs resolved after loading
-    pad_id: int = field(init=False)
-    equal_id: int = field(init=False)
-    eot_id: int = field(init=False)
-
-    def __post_init__(self) -> None:
-        self.pad_id = self.stoi["_"]
-        self.equal_id = self.stoi["="]
-        self.eot_id = self.stoi["\n"]
-
-    @classmethod
-    def from_pickle(cls, path: Path) -> "Vocabulary":
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Vocabulary file not found: {path}. Run prepare.py first."
-            )
-        with path.open("rb") as fh:
-            meta = pickle.load(fh)
-        return cls(
-            vocab_size=meta["vocab_size"],
-            stoi=meta["stoi"],
-            itos=meta["itos"],
-        )
-
-
-# ---------------------------------------------------------------------------
-# Dataset
-# ---------------------------------------------------------------------------
-
-class SequenceDataset(Dataset):
-    """
-    Loads tokenised completion sequences from a binary file of uint16 token IDs.
-    """
-
-    def __init__(self, bin_path: Path, vocab: Vocabulary) -> None:
-        raw_tokens = np.fromfile(bin_path, dtype=np.uint16).astype(np.int64)
-        self.sequences = self._split_into_lines(raw_tokens, vocab.eot_id)
-        self.max_len = max(len(s) for s in self.sequences)
-        self.vocab = vocab
-
-    @staticmethod
-    def _split_into_lines(
-        tokens: np.ndarray, eot_id: int
-    ) -> list[torch.Tensor]:
-        eot_indices = np.where(tokens == eot_id)[0]
-        sequences: list[torch.Tensor] = []
-        start = 0
-        for end in eot_indices:
-            sequences.append(torch.tensor(tokens[start : end + 1]))
-            start = end + 1
-        return sequences
-
-    def _build_targets(
-        self, seq: torch.Tensor, x: torch.Tensor
-    ) -> torch.Tensor:
-        y = torch.full_like(x, fill_value=-100)
-        shifted = seq[1:].clone()
-
-        eq_positions = (x == self.vocab.equal_id).nonzero(as_tuple=True)[0]
-        if len(eq_positions) == 0:
-            raise ValueError("Sequence is missing the '=' delimiter.")
-
-        eq_pos = eq_positions[0].item()
-        y[eq_pos:] = shifted[eq_pos:]
-        return y
-
-    def _pad_to_length(
-        self, tensor: torch.Tensor, target_len: int, pad_value: int
-    ) -> torch.Tensor:
-        shortfall = target_len - len(tensor)
-        if shortfall <= 0:
-            return tensor
-        padding = torch.full((shortfall,), pad_value, dtype=torch.long)
-        return torch.cat([tensor, padding])
-
-    def __len__(self) -> int:
-        return len(self.sequences)
-
-    def __getitem__(self, idx: int) -> tuple[torch.Tensor, torch.Tensor]:
-        seq = self.sequences[idx]
-        target_len = self.max_len - 1   
-
-        x = seq[:-1].clone()            
-        y = self._build_targets(seq, x)
-
-        x = self._pad_to_length(x, target_len, self.vocab.pad_id)
-        y = self._pad_to_length(y, target_len, pad_value=-100)
-
-        return x, y
-
-
-# ---------------------------------------------------------------------------
-# Model
-# ---------------------------------------------------------------------------
-
-class CompletionTransformer(nn.Module):
-    """
-    Decoder-only transformer (GPT-style) for character-level sequence completion.
-    """
-
-    def __init__(
-        self,
-        vocab_size: int,
-        seq_len: int,
-        d_model: int,
-        n_heads: int,
-        n_layers: int,
-    ) -> None:
-        super().__init__()
-        self.token_embedding = nn.Embedding(vocab_size, d_model)
-        self.position_embedding = nn.Embedding(seq_len, d_model)
-
-        encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model,
-            nhead=n_heads,
-            dim_feedforward=d_model * 4,
-            dropout=0.0,
-            batch_first=True,
-            norm_first=True,
-        )
-        # enable_nested_tensor=False prevents a warning but may also prevent optimization
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers, enable_nested_tensor=False)
-        self.ln_f = nn.LayerNorm(d_model)
-        self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
-
-    def forward(self, idx: torch.Tensor) -> torch.Tensor:
-        _b, t = idx.size()
-        pos = torch.arange(t, dtype=torch.long, device=idx.device).unsqueeze(0)
-
-        x = self.token_embedding(idx) + self.position_embedding(pos)
-
-        causal_mask = nn.Transformer.generate_square_subsequent_mask(
-            t, device=idx.device
-        )
-        x = self.transformer(x, mask=causal_mask, is_causal=True)
-
-        return self.lm_head(self.ln_f(x))
-
-
-# ---------------------------------------------------------------------------
-# Training & validation steps
-# ---------------------------------------------------------------------------
-
-def run_epoch(
-    model: nn.Module,
-    loader: DataLoader,
-    vocab_size: int,
-    criterion: nn.Module,
-    optimizer: Optional[optim.Optimizer],
-    grad_clip: float,
-    device: str,
-    log_interval: int,
-    epoch: int,
-    total_epochs: int,
-) -> float:
-    is_train = optimizer is not None
-    model.train(is_train)
-
-    total_loss = 0.0
-    ctx = torch.enable_grad() if is_train else torch.no_grad()
-
-    with ctx:
-        for batch_idx, (X, Y) in enumerate(loader):
-            X, Y = X.to(device), Y.to(device)
-            logits = model(X)
-            loss = criterion(logits.view(-1, vocab_size), Y.view(-1))
-
-            if is_train:
-                optimizer.zero_grad()
-                loss.backward()
-                nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-                optimizer.step()
-
-                if batch_idx % log_interval == 0:
-                    print(
-                        f"Epoch {epoch}/{total_epochs} | "
-                        f"Batch {batch_idx}/{len(loader)} | "
-                        f"Loss: {loss.item():.4f}"
-                    )
-
-            total_loss += loss.item()
-
-    return total_loss / len(loader)
 
 
 # ---------------------------------------------------------------------------
@@ -412,7 +221,13 @@ def main() -> None:
 
     # --- Persist weights ---
     weights_path = cfg.out_dir / "completion_model.pth"
-    torch.save(model.state_dict(), weights_path)
+    model_cfg = ModelConfig(
+        seq_len=seq_len,
+        d_model=cfg.embedding_dim,
+        n_heads=cfg.n_heads,
+        n_layers=cfg.n_layers,
+    )
+    torch.save(make_checkpoint_payload(model, model_cfg), weights_path)
     print(f"Weights saved to {weights_path}")
 
     # --- Final Statistics ---

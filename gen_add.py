@@ -1,35 +1,35 @@
 #!/usr/bin/env python3
-import random
-import string
-import argparse
+from __future__ import annotations
 
-def main():
+import argparse
+import random
+
+from completion_core.dataset_generators import write_lines
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate a modular addition dataset."
     )
-    
-    # Define required positional arguments
     parser.add_argument(
-        "V", 
-        type=int, 
-        help="The modulo base value (upper bound for random integers)"
+        "V",
+        type=int,
+        help="The modulo base value (upper bound for random integers)",
     )
     parser.add_argument(
-        "N", 
-        type=int, 
-        help="Number of addition lines to generate"
+        "N",
+        type=int,
+        help="Number of addition lines to generate",
     )
-    
     args = parser.parse_args()
-    
-    V = args.V
-    N = args.N
-    
-    with open("inputadd.txt", "w", encoding="utf-8") as f:
-        for i in range(N):
-            a = random.randint(0, V-1)
-            b = random.randint(0, V-1)
-            f.write(f"{a}+{b}={(a+b) % V}\n")
+
+    def build_line() -> str:
+        a = random.randint(0, args.V - 1)
+        b = random.randint(0, args.V - 1)
+        return f"{a}+{b}={(a + b) % args.V}\n"
+
+    write_lines("inputadd.txt", args.N, build_line)
+
 
 if __name__ == "__main__":
     main()
