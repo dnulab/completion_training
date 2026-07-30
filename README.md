@@ -51,6 +51,31 @@ At the bottom, it will output the accuracy, split between total processed, total
 
 You can also test individual input strings, for example using `python generate_one.py rg` to see if the model correctly outputs `RG`. You can test any string of length 1-3 using this method.
 
+## Running the New Test Suite
+
+The project now includes a small, refactor-focused pytest suite with fast and integration layers.
+
+### Fast tests (recommended during active refactoring)
+Runs CLI smoke checks and tiny data-logic checks only:
+
+```
+./venv/Scripts/python.exe -m pytest -q -m "not integration"
+```
+
+### Integration tests (end-to-end tiny pipeline)
+Runs only integration checks (including tiny training/inference flow):
+
+```
+./venv/Scripts/python.exe -m pytest -q -m integration
+```
+
+### Full suite
+Runs everything:
+
+```
+./venv/Scripts/python.exe -m pytest -q
+```
+
 # Second Experiment: Out-of-Distribution Generalization
 How does an AI learn to solve problems it was never explicitly shown? In this experiment, you will test a model's ability to achieve true mathematical generalization, but this time, you'll need to apply the syntax you learned in the first module.
 ### 1. The Challenge: Generate a Sparse Math Dataset

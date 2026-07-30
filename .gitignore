@@ -181,3 +181,6 @@ input*.txt
 
 # Saved metrics
 metrics.csv
+
+# Temporary configuration files
+config/*_temp.py
