@@ -142,3 +142,58 @@ def test_prepare_2char_writes_expected_outputs_and_meta(tmp_path: Path) -> None:
     assert "c_" in stoi
     assert "WW" in stoi
     assert "W_" in stoi
+
+
+def test_prepare_phonebook_accepts_explicit_train_and_eval_files(tmp_path: Path) -> None:
+    train_file = tmp_path / "train_phonebook.txt"
+    eval_file = tmp_path / "eval_phonebook.txt"
+    train_file.write_text("alice=555111\nbob=555222\n", encoding="utf-8")
+    eval_file.write_text("carol=555333\n", encoding="utf-8")
+
+    out_dir = tmp_path / "phonebook_data"
+    result = run_script(
+        "phonebook/prepare_phonebook.py",
+        [
+            "--train-input",
+            str(train_file),
+            "--eval-input",
+            str(eval_file),
+            "--out-dir",
+            str(out_dir),
+        ],
+        cwd=tmp_path,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (out_dir / "train.bin").exists()
+    assert (out_dir / "val.bin").exists()
+    assert (out_dir / "meta.pkl").exists()
+
+
+def test_prepare_phonebook_rejects_only_one_explicit_input_file(tmp_path: Path) -> None:
+    train_file = tmp_path / "train_phonebook.txt"
+    train_file.write_text("alice=555111\n", encoding="utf-8")
+
+    result = run_script(
+        "phonebook/prepare_phonebook.py",
+        ["--train-input", str(train_file), "--out-dir", str(tmp_path / "phonebook_data")],
+        cwd=tmp_path,
+    )
+    combined = result.stdout + result.stderr
+    assert result.returncode != 0
+    assert "both --train-input and --eval-input must be provided together" in combined.lower()
+
+
+def test_prepare_phonebook_positional_input_still_supports_split_mode(tmp_path: Path) -> None:
+    input_file = tmp_path / "phonebook.txt"
+    input_file.write_text("a=1\nb=2\nc=3\nd=4\n", encoding="utf-8")
+
+    out_dir = tmp_path / "phonebook_data"
+    result = run_script(
+        "phonebook/prepare_phonebook.py",
+        [str(input_file), "--out-dir", str(out_dir), "--train-split", "0.5"],
+        cwd=tmp_path,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (out_dir / "train.bin").exists()
+    assert (out_dir / "val.bin").exists()
+    assert (out_dir / "meta.pkl").exists()

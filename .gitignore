@@ -168,6 +168,10 @@ Thumbs.db
 ehthumbs.db
 Thumbs.db
 
+
+# Temporary hacks
+unwanted/
+
 # Generated training data inputs 
 inputs/
 
