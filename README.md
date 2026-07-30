@@ -61,16 +61,16 @@ Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V`
 Now, prepare your newly generated `inputs/add.txt` file for training and kick off the training routine just like you did in the first experiment.
 Pro-Tip: Mathematical patterns take longer to learn than simple memorization. Before running the training script, open config_1char.py and locate the epochs variable, and increase it (e.g., set epochs = 200 or higher) to give the network enough time to discover the underlying arithmetic logic.
 ### 3. Exhaustive Evaluation
-While you can test accuracy using generate.py on your input file, we want to see if the model actually understands addition globally. We can test its conceptual understanding by sweeping every single possible combination from $0+0$ to $99+99$. To do this, input the following command into console:
+While you can test accuracy using generate.py on your input file, we want to see if the model actually understands addition globally. Try a few single test cases using `python generate_one.py`. We can test the model's conceptual understanding by sweeping every single possible combination from $0+0$ to $99+99$. To do this, use:
 ```
 python generate_all.py
 ```
-Note that the accuracy is higher than 30%. That is because the model is learning (some of) the underlying pattern and not just memorizing the data.
+Note that the accuracy is higher than 30%. That is because the model is learning an underlying pattern and not just memorizing the data.
 
 
 # Running the Test Suite
 
-The project includes a small, refactor-focused pytest suite with fast and integration layers.
+The project includes a small, refactor-focused pytest suite with fast and integration layers. Practice running the tests now so that you can use them later as you make further changes to this code base.
 
 ### Fast tests (recommended during active refactoring)
 Runs CLI smoke checks and tiny data-logic checks only:

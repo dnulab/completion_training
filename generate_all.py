@@ -30,12 +30,17 @@ def main() -> None:
     correct_predictions = 0
     total_predictions = 0
 
-    print("Evaluating all pairs from 0+0 to 299+299...")
+    max_val = 99
+    modulus = 100
 
-    for i in range(0, 300):
-        for j in range(0, 300):
+    print(f"Evaluating all pairs from 0+0 to {max_val}+{max_val}...")
+
+    for i in range(0, max_val + 1):
+        print(f"Iteration {i+1} of {max_val + 1}: Evaluating {i}+j for j in 0 to {max_val}...")   
+        print(f"Current Accuracy: {correct_predictions}/{total_predictions} = {(correct_predictions / total_predictions * 100) if total_predictions > 0 else 0:.2f}%")
+        for j in range(0, max_val + 1):
             lhs = f"{i}+{j}"
-            ground_truth = str((i + j) % 300)
+            ground_truth = str((i + j) % modulus)
 
             prediction = complete_sequence(
                 lhs=lhs,
