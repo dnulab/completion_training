@@ -9,7 +9,7 @@ from pathlib import Path
 SCRIPT_DIR = Path(__file__).resolve().parent
 DEFAULT_FIRST_NAMES = SCRIPT_DIR / "names" / "first_names.txt"
 DEFAULT_LAST_NAMES = SCRIPT_DIR / "names" / "last_names.txt"
-DEFAULT_OUTPUT = Path("inputs") / "phone_book.txt"
+DEFAULT_OUTPUT = Path("inputs") / "phonebook.txt"
 DEFAULT_SEED = 104729
 
 

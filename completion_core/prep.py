@@ -76,7 +76,8 @@ def save_outputs(
     out_dir.mkdir(parents=True, exist_ok=True)
 
     train_ids.tofile(out_dir / "train.bin")
-    val_ids.tofile(out_dir / "val.bin")
+    if len(val_ids) > 0:
+        val_ids.tofile(out_dir / "val.bin")
 
     meta = {"vocab_size": len(stoi), "stoi": stoi, "itos": itos}
     with (out_dir / "meta.pkl").open("wb") as fh:
