@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import random
 
-from completion_core.dataset_generators import resolve_charset, write_lines
+from completion_core.dataset_generators import default_inputs_path, resolve_charset, write_lines
 
 
 def generate_all_unique_strings(n: int, charset: str) -> list[str]:
@@ -48,8 +48,9 @@ def main() -> None:
         a = random.choice(all_possible_inputs)
         return f"{a}={mapping_dict[a]}\n"
 
-    write_lines("input.txt", args.num_lines, build_line)
-    print(f"Successfully generated {args.num_lines} lines in input.txt")
+    output_path = default_inputs_path("comp_data.txt")
+    write_lines(output_path, args.num_lines, build_line)
+    print(f"Successfully generated {args.num_lines} lines in {output_path}")
 
 
 if __name__ == "__main__":

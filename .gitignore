@@ -169,7 +169,7 @@ ehthumbs.db
 Thumbs.db
 
 # Generated training data inputs 
-input*.txt
+inputs/
 
 # Prepared training data inputs
 *.bin

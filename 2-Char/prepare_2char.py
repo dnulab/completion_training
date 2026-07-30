@@ -33,7 +33,7 @@ from completion_core.prep import (
 
 @dataclass
 class PrepareConfig:
-    input_file: Path = Path("input.txt")
+    input_file: Path = Path("inputs/comp_data.txt")
     out_dir: Path = Path("data")
     train_split: float = 0.9
     pad_token: str = "_"        # Used to pad odd-length inputs/outputs
@@ -85,8 +85,8 @@ def parse_args() -> PrepareConfig:
         "input_file",
         nargs="?",
         type=Path,
-        default=Path("input.txt"),
-        help="Path to the input text file (default: input.txt)",
+        default=Path("inputs/comp_data.txt"),
+        help="Path to the input text file (default: inputs/comp_data.txt)",
     )
     parser.add_argument(
         "--out-dir",

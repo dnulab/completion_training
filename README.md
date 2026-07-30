@@ -24,13 +24,13 @@ python make_inputs_capital.py 3 26 1000
 
 - 1000: The number of unique dataset lines to generate.
 
-We'll be training a model of that learns how to capitalize short input strings. The output will be stored in a file called `inputcapital.txt`. You can open this file to see the generated data. Each line contains a string like `drb=DRB` or `md=MD`. The left side of the `=` is the input string, and the right side is the expected output. The model will learn to map the input to the output.
+We'll be training a model of that learns how to capitalize short input strings. The output will be stored in `inputs/capital.txt`. You can open this file to see the generated data. Each line contains a string like `drb=DRB` or `md=MD`. The left side of the `=` is the input string, and the right side is the expected output. The model will learn to map the input to the output.
 
 ### 2. Prepare the data for training.
 To transform the raw text into binary tokens (`train.bin`, `val.bin`) and a vocabulary mapping (`meta.pkl`) required by the transformer, run the preparation script:
 ```
 cd 1-Char
-python prepare_1char.py ../inputcapital.txt
+python prepare_1char.py ../inputs/capital.txt
 ```
 Note: This partitions your data into a 90% training split and 10% validation split.
 ### 3. Train the model.
@@ -45,7 +45,7 @@ By default, the model will run for 100 epochs (complete passes through the data)
 ### 4. Test for accuracy.
 Once training concludes, a model checkpoint named `completion_model.pth` will be saved inside the `out_1char/` directory. To evaluate its structural accuracy against your generated text, run:
 ```
-python generate.py inputcapital.txt
+python generate.py inputs/capital.txt
 ```
 At the bottom, it will output the accuracy, split between total processed, total correct, and a final accuracy.
 
@@ -81,9 +81,9 @@ How does an AI learn to solve problems it was never explicitly shown? In this ex
 ### 1. The Challenge: Generate a Sparse Math Dataset
 Your goal is to generate 3,000 lines of addition problems modulo 100 using the make_inputs_add.py script.
 Because a complete $100 \times 100$ addition table contains 10,000 total permutations, your model will only see 30% of the possible data during training.
-Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate the `inputadd.txt` based on the data presented earlier.
+Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate `inputs/add.txt` based on the data presented earlier.
 ### 2. Prepare and Train the Data
-Now, prepare your newly generated inputadd.txt file for training and kick off the training routine just like you did in the first experiment.
+Now, prepare your newly generated `inputs/add.txt` file for training and kick off the training routine just like you did in the first experiment.
 Pro-Tip: Mathematical patterns take longer to learn than simple memorization. Before running the training script, open config_1char.py and locate the epochs variable, and increase it (e.g., set epochs = 200 or higher) to give the network enough time to discover the underlying arithmetic logic.
 ### 3. Exhaustive Evaluation
 While you can test accuracy using generate.py on your input file, we want to see if the model actually understands addition globally. We can test its conceptual understanding by sweeping every single possible combination from $0+0$ to $99+99$. To do this, input the following command into console:

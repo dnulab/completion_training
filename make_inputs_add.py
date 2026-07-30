@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import random
 
-from completion_core.dataset_generators import write_lines
+from completion_core.dataset_generators import default_inputs_path, write_lines
 
 
 def main() -> None:
@@ -28,7 +28,7 @@ def main() -> None:
         b = random.randint(0, args.V - 1)
         return f"{a}+{b}={(a + b) % args.V}\n"
 
-    write_lines("inputadd.txt", args.N, build_line)
+    write_lines(default_inputs_path("add.txt"), args.N, build_line)
 
 
 if __name__ == "__main__":

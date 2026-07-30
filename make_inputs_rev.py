@@ -8,6 +8,7 @@ import sys
 from completion_core.cli import print_default_args_message
 from completion_core.dataset_generators import (
     bounded_charset,
+    default_inputs_path,
     print_generation_header,
     random_string,
     write_lines,
@@ -16,7 +17,7 @@ from completion_core.dataset_generators import (
 
 def generate_reverse_dataset(n: int, charset_size: int, num_lines: int) -> None:
     available_chars = bounded_charset(charset_size)
-    output_filename = "inputrev.txt"
+    output_filename = default_inputs_path("reverse.txt")
 
     print_generation_header(n, available_chars, num_lines, output_filename)
 

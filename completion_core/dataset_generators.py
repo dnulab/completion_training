@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 import random
 import string
 from collections.abc import Callable
@@ -20,7 +21,7 @@ def print_generation_header(
     n: int,
     charset: str,
     num_lines: int,
-    output_filename: str,
+    output_filename: str | Path,
 ) -> None:
     print("Generating dataset...")
     print(f"Max string length (n) : {n}")
@@ -28,8 +29,14 @@ def print_generation_header(
     print(f"Writing {num_lines} lines to {output_filename}...\n")
 
 
-def write_lines(output_filename: str, num_lines: int, builder: Callable[[], str]) -> None:
-    with open(output_filename, "w", encoding="utf-8") as fh:
+def default_inputs_path(filename: str) -> Path:
+    return Path("inputs") / filename
+
+
+def write_lines(output_filename: str | Path, num_lines: int, builder: Callable[[], str]) -> None:
+    output_path = Path(output_filename)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8") as fh:
         for _ in range(num_lines):
             fh.write(builder())
 

@@ -7,10 +7,10 @@ train and validation sets, builds a character vocabulary (plus a pad token '_'),
 and writes train.bin, val.bin, and meta.pkl to an output directory.
 
 Usage:
-    python prepare_1char.py                          # reads input.txt, writes data/
+    python prepare_1char.py                          # reads ../inputs/capital.txt, writes data/
     python prepare_1char.py path/to/input.txt
-    python prepare_1char.py input.txt --out-dir 1-Char/data
-    python prepare_1char.py input.txt --train-split 0.95
+    python prepare_1char.py ../inputs/capital.txt --out-dir 1-Char/data
+    python prepare_1char.py ../inputs/capital.txt --train-split 0.95
 """
 
 from __future__ import annotations
@@ -38,7 +38,7 @@ from completion_core.prep import (
 
 @dataclass
 class PrepareConfig:
-    input_file: Path = Path("input.txt")
+    input_file: Path = Path("inputs/capital.txt")
     out_dir: Path = Path("data")
     train_split: float = 0.9
     pad_token: str = "_"        # Must match the pad token expected by the trainer
@@ -54,8 +54,8 @@ def parse_args() -> PrepareConfig:
         "input_file",
         nargs="?",
         type=Path,
-        default=Path("input.txt"),
-        help="Path to the input text file (default: input.txt)",
+        default=Path("inputs/capital.txt"),
+        help="Path to the input text file (default: inputs/capital.txt)",
     )
     parser.add_argument(
         "--out-dir",

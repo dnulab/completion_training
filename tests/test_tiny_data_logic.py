@@ -28,7 +28,7 @@ def test_make_inputs_add_tiny_dataset_math_is_correct(tmp_path: Path) -> None:
     result = run_script("make_inputs_add.py", ["7", "8"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
-    lines = read_lines(tmp_path / "inputadd.txt")
+    lines = read_lines(tmp_path / "inputs" / "add.txt")
     assert len(lines) == 8
 
     for line in lines:
@@ -47,7 +47,7 @@ def test_make_inputs_capital_tiny_dataset_is_uppercase_transform(tmp_path: Path)
     result = run_script("make_inputs_capital.py", ["2", "3", "6"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
-    lines = read_lines(tmp_path / "inputcapital.txt")
+    lines = read_lines(tmp_path / "inputs" / "capital.txt")
     assert len(lines) == 6
 
     for line in lines:
@@ -60,7 +60,7 @@ def test_make_inputs_rev_tiny_dataset_is_reverse_transform(tmp_path: Path) -> No
     result = run_script("make_inputs_rev.py", ["2", "3", "6"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
-    lines = read_lines(tmp_path / "inputrev.txt")
+    lines = read_lines(tmp_path / "inputs" / "reverse.txt")
     assert len(lines) == 6
 
     for line in lines:
@@ -71,20 +71,21 @@ def test_make_inputs_rev_tiny_dataset_is_reverse_transform(tmp_path: Path) -> No
 
 def test_make_inputs_comp_data_is_deterministic_for_same_args(tmp_path: Path) -> None:
     args = ["2", "ab", "10"]
+    output_path = tmp_path / "inputs" / "comp_data.txt"
 
     first = run_script("make_inputs_comp_data.py", args, cwd=tmp_path)
     assert first.returncode == 0, first.stderr
-    first_content = (tmp_path / "input.txt").read_text(encoding="utf-8")
+    first_content = output_path.read_text(encoding="utf-8")
 
     second = run_script("make_inputs_comp_data.py", args, cwd=tmp_path)
     assert second.returncode == 0, second.stderr
-    second_content = (tmp_path / "input.txt").read_text(encoding="utf-8")
+    second_content = output_path.read_text(encoding="utf-8")
 
     assert first_content == second_content
 
     # Within a single run, one input should map to one output consistently.
     mapping: dict[str, str] = {}
-    for line in read_lines(tmp_path / "input.txt"):
+    for line in read_lines(output_path):
         lhs, rhs = line.split("=")
         if lhs in mapping:
             assert mapping[lhs] == rhs

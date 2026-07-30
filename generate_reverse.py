@@ -21,7 +21,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--n", type=int, default=3, help="Checks lengths up to 2*n")
     parser.add_argument("--charset-size", type=int, default=6, help="Alphabet dimension")
-    parser.add_argument("--train-file", type=Path, default=Path("inputrev.txt"))
+    parser.add_argument("--train-file", type=Path, default=Path("inputs/reverse.txt"))
     parser.add_argument("--out-dir", type=Path, default=Path("out_1char"))
     parser.add_argument("--data-dir", type=Path, default=Path("1-Char/data"))
     args = parser.parse_args()
