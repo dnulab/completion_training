@@ -28,10 +28,10 @@ def run_script(script_rel: str, args: list[str], cwd: Path | None = None) -> sub
 
 def test_argparse_scripts_show_help() -> None:
     scripts = [
-        "gen_add.py",
-        "gen_capital.py",
-        "gen_comp_data.py",
-        "gen_rev.py",
+        "make_inputs_add.py",
+        "make_inputs_capital.py",
+        "make_inputs_comp_data.py",
+        "make_inputs_rev.py",
         "1-Char/prepare_1char.py",
         "2-Char/prepare_2char.py",
     ]

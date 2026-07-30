@@ -14,9 +14,9 @@ Notes:
 # First Experiment: Train a memorization model
 
 ### 1. Generate the data.
-To start your first experiment, you must first generate and store some values in a .txt file using one of the `gen_*.py` files. We will start with `gen_capital.py`. First, run the following command in your terminal:
+To start your first experiment, you must first generate and store some values in a .txt file using one of the `make_inputs_*.py` files. We will start with `make_inputs_capital.py`. First, run the following command in your terminal:
 ```
-python gen_capital.py 3 26 1000
+python make_inputs_capital.py 3 26 1000
 ```
 - 3: The maximum length of the input string.
 
@@ -79,9 +79,9 @@ Runs everything:
 # Second Experiment: Out-of-Distribution Generalization
 How does an AI learn to solve problems it was never explicitly shown? In this experiment, you will test a model's ability to achieve true mathematical generalization, but this time, you'll need to apply the syntax you learned in the first module.
 ### 1. The Challenge: Generate a Sparse Math Dataset
-Your goal is to generate 3,000 lines of addition problems modulo 100 using the gen_add.py script.
+Your goal is to generate 3,000 lines of addition problems modulo 100 using the make_inputs_add.py script.
 Because a complete $100 \times 100$ addition table contains 10,000 total permutations, your model will only see 30% of the possible data during training.
-Your Task: Note that `gen_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate the `inputadd.txt` based on the data presented earlier.
+Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate the `inputadd.txt` based on the data presented earlier.
 ### 2. Prepare and Train the Data
 Now, prepare your newly generated inputadd.txt file for training and kick off the training routine just like you did in the first experiment.
 Pro-Tip: Mathematical patterns take longer to learn than simple memorization. Before running the training script, open config_1char.py and locate the epochs variable, and increase it (e.g., set epochs = 200 or higher) to give the network enough time to discover the underlying arithmetic logic.

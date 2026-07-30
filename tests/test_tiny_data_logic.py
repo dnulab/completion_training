@@ -24,8 +24,8 @@ def read_lines(path: Path) -> list[str]:
     return [line.strip() for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 
-def test_gen_add_tiny_dataset_math_is_correct(tmp_path: Path) -> None:
-    result = run_script("gen_add.py", ["7", "8"], cwd=tmp_path)
+def test_make_inputs_add_tiny_dataset_math_is_correct(tmp_path: Path) -> None:
+    result = run_script("make_inputs_add.py", ["7", "8"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
     lines = read_lines(tmp_path / "inputadd.txt")
@@ -43,8 +43,8 @@ def test_gen_add_tiny_dataset_math_is_correct(tmp_path: Path) -> None:
         assert c == (a + b) % 7
 
 
-def test_gen_capital_tiny_dataset_is_uppercase_transform(tmp_path: Path) -> None:
-    result = run_script("gen_capital.py", ["2", "3", "6"], cwd=tmp_path)
+def test_make_inputs_capital_tiny_dataset_is_uppercase_transform(tmp_path: Path) -> None:
+    result = run_script("make_inputs_capital.py", ["2", "3", "6"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
     lines = read_lines(tmp_path / "inputcapital.txt")
@@ -56,8 +56,8 @@ def test_gen_capital_tiny_dataset_is_uppercase_transform(tmp_path: Path) -> None
         assert rhs == lhs.upper()
 
 
-def test_gen_rev_tiny_dataset_is_reverse_transform(tmp_path: Path) -> None:
-    result = run_script("gen_rev.py", ["2", "3", "6"], cwd=tmp_path)
+def test_make_inputs_rev_tiny_dataset_is_reverse_transform(tmp_path: Path) -> None:
+    result = run_script("make_inputs_rev.py", ["2", "3", "6"], cwd=tmp_path)
     assert result.returncode == 0, result.stderr
 
     lines = read_lines(tmp_path / "inputrev.txt")
@@ -69,14 +69,14 @@ def test_gen_rev_tiny_dataset_is_reverse_transform(tmp_path: Path) -> None:
         assert rhs == lhs[::-1]
 
 
-def test_gen_comp_data_is_deterministic_for_same_args(tmp_path: Path) -> None:
+def test_make_inputs_comp_data_is_deterministic_for_same_args(tmp_path: Path) -> None:
     args = ["2", "ab", "10"]
 
-    first = run_script("gen_comp_data.py", args, cwd=tmp_path)
+    first = run_script("make_inputs_comp_data.py", args, cwd=tmp_path)
     assert first.returncode == 0, first.stderr
     first_content = (tmp_path / "input.txt").read_text(encoding="utf-8")
 
-    second = run_script("gen_comp_data.py", args, cwd=tmp_path)
+    second = run_script("make_inputs_comp_data.py", args, cwd=tmp_path)
     assert second.returncode == 0, second.stderr
     second_content = (tmp_path / "input.txt").read_text(encoding="utf-8")
 
