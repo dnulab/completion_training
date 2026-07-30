@@ -105,7 +105,7 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
     # 5) Single prompt inference should execute successfully.
     infer_one = run_script(
         "generate_one.py",
-        ["a", "--out_dir", str(compat_out_dir), "--data_dir", str(data_dir)],
+        ["a", "--out-dir", str(compat_out_dir), "--data-dir", str(data_dir)],
         cwd=tmp_path,
     )
     assert infer_one.returncode == 0, infer_one.stderr

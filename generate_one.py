@@ -20,13 +20,13 @@ def parse_args() -> argparse.Namespace:
         help="The input prompt string for the model (e.g., 'abc' or 'abc=')",
     )
     parser.add_argument(
-        "--out_dir",
+        "--out-dir",
         type=str,
         default="out_1char",
         help="Directory containing the model checkpoint (default: out_1char)",
     )
     parser.add_argument(
-        "--data_dir",
+        "--data-dir",
         type=str,
         default="1-Char/data",
         help="Directory containing metadata vocabulary (default: 1-Char/data)",
