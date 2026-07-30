@@ -75,7 +75,8 @@ def main():
                 d_model=d_model, nhead=nhead, dim_feedforward=d_model*4, 
                 dropout=0.0, batch_first=True, norm_first=True
             )
-            self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+            # enable_nested_tensor=False prevents a warning but may also prevent optimization
+            self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers, enable_nested_tensor=False)
             self.ln_f = nn.LayerNorm(d_model)
             self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
 

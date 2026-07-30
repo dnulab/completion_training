@@ -180,7 +180,8 @@ class CompletionTransformer(nn.Module):
             batch_first=True,
             norm_first=True,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
+        # enable_nested_tensor=False prevents a warning but may also prevent optimization
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers, enable_nested_tensor=False)
         self.ln_f = nn.LayerNorm(d_model)
         self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
 
