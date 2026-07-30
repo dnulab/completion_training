@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import dataclass
 from pathlib import Path
+import string
 import sys
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -10,6 +11,7 @@ if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
 DEFAULT_INPUT = Path("inputs") / "phonebook.txt"
+REQUIRED_ALNUM_CHARS = string.ascii_lowercase + string.ascii_uppercase + string.digits
 
 
 from completion_core.prep import (
@@ -120,7 +122,9 @@ def main() -> None:
     val_str = "".join(val_lines)
     full_str = train_str + val_str
 
-    stoi, itos = build_char_vocab(full_str, cfg.pad_token)
+    vocab_source = full_str + REQUIRED_ALNUM_CHARS
+    stoi, itos = build_char_vocab(vocab_source, cfg.pad_token)
+    print(f"Forced alnum set: enabled ({len(REQUIRED_ALNUM_CHARS)} chars)")
     print(f"Vocabulary size : {len(stoi)}")
 
     train_ids = encode_chars(train_str, stoi)

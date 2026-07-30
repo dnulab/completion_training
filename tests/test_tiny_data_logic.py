@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pickle
+import string
 import subprocess
 import sys
 from pathlib import Path
@@ -167,6 +168,13 @@ def test_prepare_phonebook_accepts_explicit_train_and_eval_files(tmp_path: Path)
     assert (out_dir / "train.bin").exists()
     assert (out_dir / "val.bin").exists()
     assert (out_dir / "meta.pkl").exists()
+
+    with (out_dir / "meta.pkl").open("rb") as fh:
+        meta = pickle.load(fh)
+
+    stoi = meta["stoi"]
+    for ch in string.ascii_lowercase + string.ascii_uppercase + string.digits:
+        assert ch in stoi
 
 
 def test_prepare_phonebook_rejects_only_one_explicit_input_file(tmp_path: Path) -> None:
