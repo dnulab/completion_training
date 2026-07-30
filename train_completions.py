@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Train a GPT-style decoder-only transformer on character-level completion sequences.
 

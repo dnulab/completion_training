@@ -51,9 +51,26 @@ At the bottom, it will output the accuracy, split between total processed, total
 
 You can also test individual input strings, for example using `python generate_one.py rg` to see if the model correctly outputs `RG`. You can test any string of length 1-3 using this method.
 
-## Running the New Test Suite
+# Second Experiment: Out-of-Distribution Generalization
+How does an AI learn to solve problems it was never explicitly shown? In this experiment, you will test a model's ability to achieve true mathematical generalization, but this time, you'll need to apply the syntax you learned in the first module.
+### 1. The Challenge: Generate a Sparse Math Dataset
+Your goal is to generate 3,000 lines of addition problems modulo 100 using the make_inputs_add.py script.
+Because a complete $100 \times 100$ addition table contains 10,000 total permutations, your model will only see 30% of the possible data during training.
+Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate `inputs/add.txt` based on the data presented earlier.
+### 2. Prepare and Train the Data
+Now, prepare your newly generated `inputs/add.txt` file for training and kick off the training routine just like you did in the first experiment.
+Pro-Tip: Mathematical patterns take longer to learn than simple memorization. Before running the training script, open config_1char.py and locate the epochs variable, and increase it (e.g., set epochs = 200 or higher) to give the network enough time to discover the underlying arithmetic logic.
+### 3. Exhaustive Evaluation
+While you can test accuracy using generate.py on your input file, we want to see if the model actually understands addition globally. We can test its conceptual understanding by sweeping every single possible combination from $0+0$ to $99+99$. To do this, input the following command into console:
+```
+python generate_all.py
+```
+Note that the accuracy is higher than 30%. That is because the model is learning (some of) the underlying pattern and not just memorizing the data.
 
-The project now includes a small, refactor-focused pytest suite with fast and integration layers.
+
+# Running the Test Suite
+
+The project includes a small, refactor-focused pytest suite with fast and integration layers.
 
 ### Fast tests (recommended during active refactoring)
 Runs CLI smoke checks and tiny data-logic checks only:
@@ -76,18 +93,3 @@ Runs everything:
 ./venv/Scripts/python.exe -m pytest -q
 ```
 
-# Second Experiment: Out-of-Distribution Generalization
-How does an AI learn to solve problems it was never explicitly shown? In this experiment, you will test a model's ability to achieve true mathematical generalization, but this time, you'll need to apply the syntax you learned in the first module.
-### 1. The Challenge: Generate a Sparse Math Dataset
-Your goal is to generate 3,000 lines of addition problems modulo 100 using the make_inputs_add.py script.
-Because a complete $100 \times 100$ addition table contains 10,000 total permutations, your model will only see 30% of the possible data during training.
-Your Task: Note that `make_inputs_add.py` takes arguments `V` and `N`, where `V` is the modulus and `N` is the number of lines generated. Using this, create and run a command to generate `inputs/add.txt` based on the data presented earlier.
-### 2. Prepare and Train the Data
-Now, prepare your newly generated `inputs/add.txt` file for training and kick off the training routine just like you did in the first experiment.
-Pro-Tip: Mathematical patterns take longer to learn than simple memorization. Before running the training script, open config_1char.py and locate the epochs variable, and increase it (e.g., set epochs = 200 or higher) to give the network enough time to discover the underlying arithmetic logic.
-### 3. Exhaustive Evaluation
-While you can test accuracy using generate.py on your input file, we want to see if the model actually understands addition globally. We can test its conceptual understanding by sweeping every single possible combination from $0+0$ to $99+99$. To do this, input the following command into console:
-```
-python generate_all.py
-```
-Note that the accuracy is higher than 30%. That is because the model is learning (some of) the underlying pattern and not just memorizing the data.

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Prepare a 2-character level dataset for train_completions.py.
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Evaluate the accuracy of a trained sequence completion transformer.
 
