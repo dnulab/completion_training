@@ -26,7 +26,7 @@ def generate_capital_dataset(n: int, charset_size: int, num_lines: int) -> None:
         return f"{input_str}={input_str.upper()}\n"
 
     write_lines(output_filename, num_lines, build_line)
-    print("Dataset successfully created!")
+    print("Dataset successfully created")
 
 
 def main() -> None:
