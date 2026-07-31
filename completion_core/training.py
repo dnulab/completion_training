@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
@@ -9,6 +10,17 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
 from completion_core.vocabulary import Vocabulary
+
+
+@dataclass
+class EpochMetrics:
+    loss: float
+    token_accuracy: float
+    sequence_accuracy: float
+    token_correct: int
+    token_total: int
+    sequence_correct: int
+    sequence_total: int
 
 
 class SequenceDataset(Dataset):
@@ -105,3 +117,50 @@ def run_epoch(
             total_loss += loss.item()
 
     return total_loss / len(loader)
+
+
+def evaluate_epoch_metrics(
+    model: nn.Module,
+    loader: DataLoader,
+    vocab_size: int,
+    criterion: nn.Module,
+    device: str,
+) -> EpochMetrics:
+    model.eval()
+
+    total_loss = 0.0
+    token_correct = 0
+    token_total = 0
+    sequence_correct = 0
+    sequence_total = 0
+
+    with torch.no_grad():
+        for x_batch, y_batch in loader:
+            x_batch, y_batch = x_batch.to(device), y_batch.to(device)
+            logits = model(x_batch)
+            loss = criterion(logits.view(-1, vocab_size), y_batch.view(-1))
+            total_loss += loss.item()
+
+            preds = torch.argmax(logits, dim=-1)
+            supervised_mask = y_batch != -100
+
+            token_correct += ((preds == y_batch) & supervised_mask).sum().item()
+            token_total += supervised_mask.sum().item()
+
+            has_supervised = supervised_mask.any(dim=1)
+            masked_match = ((preds == y_batch) | (~supervised_mask)).all(dim=1)
+            sequence_correct += (masked_match & has_supervised).sum().item()
+            sequence_total += has_supervised.sum().item()
+
+    token_accuracy = (token_correct / token_total) if token_total > 0 else 0.0
+    sequence_accuracy = (sequence_correct / sequence_total) if sequence_total > 0 else 0.0
+
+    return EpochMetrics(
+        loss=total_loss / len(loader),
+        token_accuracy=token_accuracy,
+        sequence_accuracy=sequence_accuracy,
+        token_correct=token_correct,
+        token_total=token_total,
+        sequence_correct=sequence_correct,
+        sequence_total=sequence_total,
+    )

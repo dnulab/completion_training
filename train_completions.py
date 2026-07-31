@@ -24,7 +24,7 @@ from completion_core.modeling import (
     ModelConfig,
     make_checkpoint_payload,
 )
-from completion_core.training import SequenceDataset, run_epoch
+from completion_core.training import SequenceDataset, evaluate_epoch_metrics, run_epoch
 from completion_core.vocabulary import Vocabulary
 
 
@@ -52,6 +52,7 @@ class TrainConfig:
     grad_clip: float = 1.0
     seed: int = 42
     log_interval: int = 50  # batches between progress prints
+    accuracy_interval: int = 10  # epochs between no-grad train/val accuracy checks
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +72,12 @@ def parse_args() -> TrainConfig:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument(
+        "--accuracy-interval",
+        type=int,
+        default=10,
+        help="Run no-grad train/val token+sequence accuracy every N epochs (default: 10)",
+    )
     parser.add_argument(
         "--finetune-from",
         type=Path,
@@ -107,7 +114,11 @@ def parse_args() -> TrainConfig:
     if "--batch-size" in sys.argv: cfg.batch_size = args.batch_size
     if "--epochs" in sys.argv: cfg.epochs = args.epochs
     if "--lr" in sys.argv: cfg.lr = args.lr
+    if "--accuracy-interval" in sys.argv: cfg.accuracy_interval = args.accuracy_interval
     if "--finetune-from" in sys.argv: cfg.finetune_from = args.finetune_from
+
+    if cfg.accuracy_interval < 1:
+        raise ValueError("--accuracy-interval must be >= 1")
         
     return cfg
 
@@ -153,6 +164,9 @@ def main() -> None:
     train_loader = DataLoader(
         train_dataset, batch_size=cfg.batch_size, shuffle=True
     )
+    train_eval_loader = DataLoader(
+        train_dataset, batch_size=cfg.batch_size, shuffle=False
+    )
     val_loader = DataLoader(
         val_dataset, batch_size=cfg.batch_size, shuffle=False
     )
@@ -197,7 +211,19 @@ def main() -> None:
     csv_path = cfg.out_dir / "metrics.csv"
     csv_file = open(csv_path, mode="w", newline="", encoding="utf-8")
     csv_writer = csv.writer(csv_file)
-    csv_writer.writerow(["Epoch", "Train Loss", "Val Loss", "Training Time (sec)", "Param Count"])
+    csv_writer.writerow(
+        [
+            "Epoch",
+            "Train Loss",
+            "Val Loss",
+            "Train Token Acc",
+            "Val Token Acc",
+            "Train Seq Acc",
+            "Val Seq Acc",
+            "Training Time (sec)",
+            "Param Count",
+        ]
+    )
 
     # --- Training loop ---
     for epoch in range(1, cfg.epochs + 1):
@@ -217,20 +243,68 @@ def main() -> None:
             device=cfg.device, log_interval=cfg.log_interval, epoch=epoch, total_epochs=cfg.epochs,
         )
 
+        should_run_accuracy = (epoch % cfg.accuracy_interval == 0) or (epoch == cfg.epochs)
+        train_token_acc = None
+        val_token_acc = None
+        train_seq_acc = None
+        val_seq_acc = None
+        if should_run_accuracy:
+            train_metrics = evaluate_epoch_metrics(
+                model=model,
+                loader=train_eval_loader,
+                vocab_size=vocab.vocab_size,
+                criterion=criterion,
+                device=cfg.device,
+            )
+            val_metrics = evaluate_epoch_metrics(
+                model=model,
+                loader=val_loader,
+                vocab_size=vocab.vocab_size,
+                criterion=criterion,
+                device=cfg.device,
+            )
+            train_token_acc = train_metrics.token_accuracy
+            val_token_acc = val_metrics.token_accuracy
+            train_seq_acc = train_metrics.sequence_accuracy
+            val_seq_acc = val_metrics.sequence_accuracy
+
         # Track history data for every epoch to ensure smooth curves
         history_epochs.append(epoch)
         history_train_loss.append(train_loss)
         history_val_loss.append(val_loss)
 
-        print(f"\n{'=' * 60}")
-        print(f"EPOCH {epoch} SUMMARY | Time: {epoch_time:.2f}s")
-        print(f"  Train loss : {train_loss:.4f}")
-        print(f"  Val loss   : {val_loss:.4f}")
-        print(f"{'=' * 60}\n")
+        if should_run_accuracy:
+            print(f"\n{'=' * 60}")
+            print(f"Epoch {epoch} summary | Time: {epoch_time:.2f}s")
+            print(f"  Train loss : {train_loss:.4f}")
+            print(f"  Val loss   : {val_loss:.4f}")
+            print(
+                "  Train acc  : "
+                f"token={train_token_acc * 100:.2f}% "
+                f"seq={train_seq_acc * 100:.2f}%"
+            )
+            print(
+                "  Val acc    : "
+                f"token={val_token_acc * 100:.2f}% "
+                f"seq={val_seq_acc * 100:.2f}%"
+            )
+        # else:
+        #     print(f"  Accuracy   : skipped (every {cfg.accuracy_interval} epochs)")
+            print(f"{'=' * 60}\n")
 
-        # Write data row ONLY on 10-epoch intervals (or the absolute last epoch)
-        if epoch % 10 == 0 or epoch == cfg.epochs:
-            csv_writer.writerow([epoch, f"{train_loss:.4f}", f"{val_loss:.4f}", f"{epoch_time:.2f}", param_count])
+        # Write data row on 10-epoch intervals, on accuracy epochs, and on the last epoch.
+        if epoch % 10 == 0 or should_run_accuracy:
+            csv_writer.writerow([
+                epoch,
+                f"{train_loss:.4f}",
+                f"{val_loss:.4f}",
+                f"{train_token_acc:.4f}" if train_token_acc is not None else "N/A",
+                f"{val_token_acc:.4f}" if val_token_acc is not None else "N/A",
+                f"{train_seq_acc:.4f}" if train_seq_acc is not None else "N/A",
+                f"{val_seq_acc:.4f}" if val_seq_acc is not None else "N/A",
+                f"{epoch_time:.2f}",
+                param_count,
+            ])
             csv_file.flush() # force write to disk safely
 
     csv_file.close()

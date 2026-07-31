@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import subprocess
 import sys
+import csv
 from pathlib import Path
 
 import pytest
@@ -75,6 +76,18 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
     assert train_tiny.returncode == 0, train_tiny.stderr
     assert (tiny_out_dir / "completion_model.pth").exists()
     assert (tiny_out_dir / "metrics.csv").exists()
+    tiny_output = (train_tiny.stdout + train_tiny.stderr).lower()
+    assert "train acc" in tiny_output
+    assert "val acc" in tiny_output
+
+    with (tiny_out_dir / "metrics.csv").open(newline="", encoding="utf-8") as fh:
+        reader = csv.reader(fh)
+        header = next(reader)
+
+    assert "Train Token Acc" in header
+    assert "Val Token Acc" in header
+    assert "Train Seq Acc" in header
+    assert "Val Seq Acc" in header
 
     # 4) Train a compatibility checkpoint for the current inference scripts,
     # which are fixed to 128-dim, 4 heads, 4 layers.
