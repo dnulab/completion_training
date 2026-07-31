@@ -1,7 +1,11 @@
 # Onboarding Exercise
+
+_Originally authored by Adacus Green '27 with edits by John MacCormick, summer 2026._
+
 In this module, you will learn how to train your first completion model, test its accuracy, and visualize how models learn without ever seeing all of the data.
-# Prerequisites
-To start, make sure you have Python 3.12 or higher installed. There are two packages that must be installed for this code to work; `torch` and `numpy`. To do this, run the following in the terminal:
+
+## Prerequisites
+To start, make sure you have Python installed. There are two packages that must be installed for this code to work; `torch` and `numpy`. To do this, run the following in the terminal:
 ```
 pip install torch numpy
 ```
@@ -11,7 +15,7 @@ Notes:
 
 2. It's often preferable to use a virtual environment (`venv`) for experiments of this kind.
 
-# First Experiment: Train a memorization model
+## First Experiment: Train a memorization model
 
 ### 1. Generate the data.
 To start your first experiment, you must first generate and store some values in a .txt file using one of the `make_inputs_*.py` files. We will start with `make_inputs_capital.py`. First, run the following command in your terminal:
@@ -51,7 +55,7 @@ At the bottom, it will output the accuracy, split between total processed, total
 
 You can also test individual input strings, for example using `python generate_one.py rg` to see if the model correctly outputs `RG`. You can test any string of length 1-3 using this method.
 
-# Second Experiment: Out-of-Distribution Generalization
+## Second Experiment: Out-of-Distribution Generalization
 How does an AI learn to solve problems it was never explicitly shown? In this experiment, you will test a model's ability to achieve true mathematical generalization, but this time, you'll need to apply the syntax you learned in the first module.
 ### 1. The Challenge: Generate a Sparse Math Dataset
 Your goal is to generate 3,000 lines of addition problems modulo 100 using the make_inputs_add.py script.
@@ -68,7 +72,7 @@ python generate_all.py
 Note that the accuracy is higher than 30%. That is because the model is learning an underlying pattern and not just memorizing the data.
 
 
-# Running the Test Suite
+## Running the Test Suite
 
 The project includes a small, refactor-focused pytest suite with fast and integration layers. Practice running the tests now so that you can use them later as you make further changes to this code base.
 
