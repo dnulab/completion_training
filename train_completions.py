@@ -36,6 +36,7 @@ from completion_core.vocabulary import Vocabulary
 class TrainConfig:
     data_dir: Path = Path("1-Char/data")
     out_dir: Path = Path("out_1char")
+    finetune_from: Path | None = None
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
 
     # Model
@@ -70,6 +71,12 @@ def parse_args() -> TrainConfig:
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument(
+        "--finetune-from",
+        type=Path,
+        default=None,
+        help="Path to a checkpoint to initialize model weights for fine-tuning",
+    )
     args = parser.parse_args()
 
     cfg = TrainConfig()
@@ -100,8 +107,27 @@ def parse_args() -> TrainConfig:
     if "--batch-size" in sys.argv: cfg.batch_size = args.batch_size
     if "--epochs" in sys.argv: cfg.epochs = args.epochs
     if "--lr" in sys.argv: cfg.lr = args.lr
+    if "--finetune-from" in sys.argv: cfg.finetune_from = args.finetune_from
         
     return cfg
+
+
+def load_finetune_state_dict(checkpoint_path: Path, device: str) -> dict[str, torch.Tensor]:
+    if not checkpoint_path.exists():
+        raise FileNotFoundError(f"Fine-tune checkpoint not found: {checkpoint_path}")
+
+    raw = torch.load(checkpoint_path, map_location=device)
+    if isinstance(raw, dict) and "state_dict" in raw:
+        state_dict = raw["state_dict"]
+    elif isinstance(raw, dict):
+        state_dict = raw
+    else:
+        raise TypeError(f"Unsupported checkpoint format in {checkpoint_path}")
+
+    if not isinstance(state_dict, dict) or not state_dict:
+        raise ValueError(f"Checkpoint state_dict is empty or invalid: {checkpoint_path}")
+
+    return state_dict
 
 
 def main() -> None:
@@ -139,6 +165,17 @@ def main() -> None:
         n_heads=cfg.n_heads,
         n_layers=cfg.n_layers,
     ).to(cfg.device)
+
+    if cfg.finetune_from is not None:
+        state_dict = load_finetune_state_dict(cfg.finetune_from, cfg.device)
+        try:
+            model.load_state_dict(state_dict)
+        except RuntimeError as exc:
+            raise ValueError(
+                "Fine-tune checkpoint is incompatible with the current model or vocabulary. "
+                "Ensure data/vocab and model dimensions match the source checkpoint."
+            ) from exc
+        print(f"Fine-tuning from checkpoint: {cfg.finetune_from}")
 
     # Calculate exact parameter count
     param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
