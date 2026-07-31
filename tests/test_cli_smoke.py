@@ -58,7 +58,7 @@ def test_torch_scripts_show_help_or_fail_with_missing_dependency() -> None:
             assert result.returncode == 0, f"help failed for {script}: {combined}"
             assert "usage" in combined, f"no usage text for {script}"
             if script == "train_completions.py":
-                assert "--finetune-from" in combined
+                assert "--adapt-from" in combined
                 assert "--accuracy-interval" in combined
         else:
             assert result.returncode != 0

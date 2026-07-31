@@ -49,7 +49,7 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
     data_dir = tmp_path / "tiny_data"
     tiny_out_dir = tmp_path / "tiny_out"
     compat_out_dir = tmp_path / "compat_out"
-    finetune_out_dir = tmp_path / "finetune_out"
+    adapt_out_dir = tmp_path / "adapt_out"
 
     # 2) Prepare tokenized data.
     prep = run_script(
@@ -116,8 +116,8 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
     assert train_compat.returncode == 0, train_compat.stderr
     assert (compat_out_dir / "completion_model.pth").exists()
 
-    # 4b) Fine-tune from the compatibility checkpoint with fresh run settings.
-    finetune = run_script(
+    # 4b) Adapt model from the compatibility checkpoint with fresh run settings.
+    adapt = run_script(
         "train_completions.py",
         [
             "--device",
@@ -125,7 +125,7 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
             "--data-dir",
             str(data_dir),
             "--out-dir",
-            str(finetune_out_dir),
+            str(adapt_out_dir),
             "--epochs",
             "1",
             "--batch-size",
@@ -136,14 +136,14 @@ def test_tiny_end_to_end_pipeline_with_small_transformer(tmp_path: Path) -> None
             "4",
             "--n-layers",
             "4",
-            "--finetune-from",
+            "--adapt-from",
             str(compat_out_dir / "completion_model.pth"),
         ],
         cwd=tmp_path,
     )
-    assert finetune.returncode == 0, finetune.stderr
-    assert (finetune_out_dir / "completion_model.pth").exists()
-    assert "fine-tuning from checkpoint" in (finetune.stdout + finetune.stderr).lower()
+    assert adapt.returncode == 0, adapt.stderr
+    assert (adapt_out_dir / "completion_model.pth").exists()
+    assert "adapting model from checkpoint" in (adapt.stdout + adapt.stderr).lower()
 
     # 5) Single prompt inference should execute successfully.
     infer_one = run_script(
