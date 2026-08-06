@@ -24,7 +24,7 @@ cd ..
 ```
 
 
-2. Prepare the Phase A and Phase B data separately. Notice that to compare the remembering and forgetting properties we Train and evaluate on separate data sets . In phase A, we train on phonebook A, but evaluate on phonebook B. In phase B, we train on phonebook B, but evaluate on phone book A.
+2. Prepare the Phase A and Phase B data separately. Notice that to compare the remembering and forgetting properties we train and evaluate on separate data sets. In phase A, we train on phonebook A, but evaluate on phonebook B. In phase B, we train on phonebook B, but evaluate on phone book A.
 ```bash
 py prepare_phonebook.py --train-input inputs/phonebookA.txt --eval-input inputs/phonebookB.txt --out-dir data_phase1
 py prepare_phonebook.py --train-input inputs/phonebookB.txt --eval-input inputs/phonebookA.txt --out-dir data_phase2
